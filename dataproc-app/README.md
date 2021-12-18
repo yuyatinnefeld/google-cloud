@@ -8,7 +8,7 @@ export GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/conf/service_account.json
 
 ### GCP Environment Setup
 ```bash
-gcp-iac.sh
+gcp-iacsh
 ```
 ### Dataproc Workflow Temp and Autoscaling Policy Setup & Test run
 ```bash
