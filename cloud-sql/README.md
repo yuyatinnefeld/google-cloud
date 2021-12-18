@@ -20,6 +20,7 @@
 2. execute terraform
 ```bash
 gcloud auth application-default login
+cd terraform-setup
 terraform init
 terraform plan -out=tfplan
 terraform apply tfplan -var="deletion_protection=false"
