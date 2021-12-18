@@ -1,0 +1,34 @@
+site_name: dataproc-flask-app
+site_dir: public
+
+
+theme:
+    name: material
+    palette:
+      primary: teal
+
+markdown_extensions:
+- admonition
+- pymdownx.details
+- pymdownx.superfences
+
+strict: false
+
+plugins:
+  - search
+  - gen-files:
+      scripts:
+        - docs/gen_mkdocs_pages.py
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          selection:
+            filters:
+              docstring_style: google
+          setup_commands:
+            - import sys
+            - sys.path.append("rest_api")
+          rendering:
+            show_root_heading: false
+            show_root_full_path: true

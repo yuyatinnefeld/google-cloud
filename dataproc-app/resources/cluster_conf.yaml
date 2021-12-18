@@ -1,0 +1,42 @@
+cluster_name: yt-demo-dev-yaml-cluster
+config:
+   config_bucket: yt-demo-dev-dataproc-staging
+   temp_bucket: yt-demo-dev-dataproc-temp
+   gce_cluster_config:
+       network_uri: default
+       zone_uri: europe-west1-b
+       service_account: demo-dataproc@yt-demo-dev.iam.gserviceaccount.com
+       metadata:
+           PIP_PACKAGES: google-cloud==0.34.0 google-cloud-storage==1.40.0 gcsfs==2021.6.1 pymsteams>=0.1 json2html>=1.3
+   master_config:
+       num_instances: 1
+       machine_type_uri: n1-standard-4
+       disk_config:
+           boot_disk_type: pd-standard
+           boot_disk_size_gb: 50
+           num_local_ssds: 0
+   software_config:
+       image_version: 2.0.24-ubuntu18
+   initialization_actions:
+       -   executable_file: gs://yt-demo-dev-dataproc-app/config/pip-install.sh 
+   autoscaling_config:
+       policy_uri: projects/yt-demo-dev/regions/europe-west1/autoscalingPolicies/yt-demo-dev-autoscaling-policy
+   endpoint_config:
+       enable_http_port_access: false
+   worker_config:
+       num_instances: 2
+       machine_type_uri: n1-standard-4
+       disk_config:
+           boot_disk_type: pd-standard
+           boot_disk_size_gb: 100
+           num_local_ssds: 0
+   secondary_worker_config:
+       num_instances: 2
+       machine_type_uri: n1-standard-4
+       disk_config:
+           boot_disk_type: pd-standard
+           boot_disk_size_gb: 100
+           num_local_ssds: 0
+labels:
+   usage: yt-demo-dev-yaml-cluster-usage
+
