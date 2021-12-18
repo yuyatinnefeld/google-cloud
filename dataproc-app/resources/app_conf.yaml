@@ -1,4 +1,0 @@
-project_id: yt-demo-dev
-dataproc_staging_bucket: yt-demo-dev-dataproc-staging
-dataproc_temp_bucket: yt-demo-dev-dataproc-temp
-region: europe-west1

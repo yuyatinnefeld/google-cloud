@@ -1,3 +1,0 @@
-text text this is a text
-this is a test file to check if the spark job is working.
-hello paris, berlin, tokyo
