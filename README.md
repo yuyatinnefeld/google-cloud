@@ -4,7 +4,6 @@
 - [About](#about)
 - [Topics](#topics)
 
-
 ## About
 In this project I'll document GCP stuffs which I learned as Data Engineer.
 
