@@ -1,0 +1,157 @@
+variables:
+  CLOUD_SDK_IMAGE: google/cloud-sdk:slim
+  PYTHON_IMAGE: python:3.7
+  PIP_CACHE_DIR: "${CI_PROJECT_DIR}/.cache/pip"
+
+stages:
+  - build
+  - deploy
+  - versioning
+
+cache:
+  paths:
+    - .cache/pip
+    - venv/
+
+before_script:
+  - python3 -V
+  - pip install virtualenv
+  - virtualenv venv
+  - source venv/bin/activate
+
+
+build:
+  stage: build
+  image: ${PYTHON_IMAGE}
+  script:
+    - echo "build stage"
+
+##### deployment #########################################################
+
+.deployment-process:
+  stage: deploy
+  image: ${CLOUD_SDK_IMAGE}
+  script:
+    - gcloud config set project ${PROJECT_ID}
+    - |
+      if gsutil du -s gs://${GCP_APP_BUCKET}
+      then
+        echo "the bucket ${GCP_APP_BUCKET} exists"
+      else
+        gsutil mb -l europe-west1 -c STANDARD gs://${GCP_APP_BUCKET} 
+      fi
+    - cd resources/hello_world
+    - gcloud services enable appengine.googleapis.com
+    - gcloud app create --region=europe-west || true
+    - gcloud app deploy app.yaml --bucket=gs://${GCP_APP_BUCKET} --version=1 --quiet
+    - gcloud app browse
+
+deploy-any:
+  extends:
+    - .deployment-process
+  before_script:
+    - gcloud auth activate-service-account --key-file ${GCP_SERVICE_ACCOUNT_KEY_DEV}
+  variables:
+    GCP_APP_BUCKET: "yt-demo-dev-helloworld-app"
+    PROJECT_ID: "yt-demo-dev"
+  except:
+    - master
+    - /^release.*$/
+    - /^hotfix.*$/
+    - develop
+    - tags
+
+deploy-dev:
+  extends:
+    - .deployment-process
+  before_script:
+    - gcloud auth activate-service-account --key-file ${GCP_SERVICE_ACCOUNT_KEY_DEV}
+  variables:
+    GCP_APP_BUCKET: "yt-demo-dev-helloworld-app"
+    PROJECT_ID: "yt-demo-dev"
+  only:
+    - develop
+
+
+deploy-test:
+  extends:
+    - .deployment-process
+  before_script:
+    - gcloud auth activate-service-account --key-file ${GCP_SERVICE_ACCOUNT_KEY_TEST}
+  variables:
+    GCP_APP_BUCKET: "yt-demo-test-helloworld-app"
+    PROJECT_ID: "yt-demo-test"
+  only:
+    - /^release.*$/
+    - /^hotfix.*$/
+
+deploy-prod:
+  extends:
+    - .deployment-process
+  before_script:
+    - gcloud auth activate-service-account --key-file ${GCP_SERVICE_ACCOUNT_KEY_PROD}
+  variables:
+    GCP_APP_BUCKET: "yt-demo-prod-helloworld-app"
+    PROJECT_ID: "yt-demo-prod"
+  only:
+    - tags
+  except:
+    - branches  # this is only master
+
+
+##### versioning #########################################################
+
+.increment-version:
+  stage: versioning
+  image: ${PYTHON_IMAGE}
+  before_script:
+    - pip install fire
+  script:
+    # set up ssh
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+    - eval $(ssh-agent -s)
+    - ssh-add <(echo "$GITLAB_SSH_PRIVATE_KEY") #adjust
+    - mkdir -p ~/.ssh
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+    # check out git repository
+    - git config --global user.name "GitLab Runner"
+    - git config --global user.email "dev-team@yuyatinnefeld.com" #adjust
+    - git clone git@gitlab.com:yt-gcp/app-engine-cicd.git #adjust
+    - cd app-engine-cicd # adjust
+    # increment version number
+    - echo "incrementing ${POSITION} version number on branch ${BRANCH}..."
+    - git checkout ${BRANCH} && git pull
+    - version=$(python ./version.py current)
+    - python ./version.py inc_${POSITION}
+    # commit new version number
+    - next_version=$(python ./version.py current)
+    - git add VERSION
+    - git commit -m "Incrementing version from ${version} to ${next_version}"
+    - git push origin ${BRANCH}
+
+inc-major:
+  extends: .increment-version
+  variables:
+    POSITION: major
+    BRANCH: develop
+  only:
+    - develop
+  when: manual
+
+inc-minor:
+  extends: .increment-version
+  variables:
+    POSITION: minor
+    BRANCH: develop
+  only:
+    - develop
+  when: manual
+
+inc-fix:
+  extends: .increment-version
+  variables:
+    POSITION: fix
+    BRANCH: ${CI_COMMIT_BRANCH}
+  only:
+    - /^hotfix.*$/
+  when: manual
