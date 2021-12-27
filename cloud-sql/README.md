@@ -24,6 +24,7 @@ cd terraform-setup
 terraform init
 terraform plan -out=tfplan
 terraform apply tfplan -var="deletion_protection=false"
+terraform-docs markdown . >README.md
 ```
 
 ### Option1: gcloud connection (Only External IP)
