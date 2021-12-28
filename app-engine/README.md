@@ -1,4 +1,5 @@
 # App Engine (Flask)
+This project is created to learn how to deploy App Engine Flask App in the Gitlab CICD pipeline.
 
 ## Step1 - Deploy Cloud App Engine
 - resources/hello_world
@@ -9,7 +10,3 @@
 
 ## Step3 - Use Swagger + Dataproc
 - resources/dataproc
-
-
-
-

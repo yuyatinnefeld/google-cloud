@@ -8,7 +8,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def hello():
-    return 'Hello YT World!'
+    return 'Hello App Engine World!'
 
 
 @app.errorhandler(500)

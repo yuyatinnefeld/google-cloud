@@ -18,7 +18,11 @@ pip install google-cloud-secret-manager
 ```
 
 7. Setup the environment variable
+```bash
 export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/conf/yt-demo-dev-sa.json"
+```
 
-7. Test run
+8. Test run
+```bash
 python secrets_call.py
+```
