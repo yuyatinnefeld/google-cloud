@@ -11,4 +11,5 @@ In this project I'll document GCP stuffs which I learned as Data Engineer.
 ## Topics
 - GCP SDK (gloud, bq, gsutil)
 - GCP API / Client Library
+- GCP Cloud Code (Editor Extension)
 - Terraform
