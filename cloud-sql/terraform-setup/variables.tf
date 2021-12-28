@@ -12,7 +12,3 @@ variable "zone" {
 variable "postgres_pass" {
   default = "postgres"
 }
-
-variable "frontend_user_pass" {
-  default = "frontend_user"
-}

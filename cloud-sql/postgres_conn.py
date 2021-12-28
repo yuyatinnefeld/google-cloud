@@ -3,8 +3,8 @@ from psycopg2 import Error
 
 try:
     # Connect to an existing database
-    connection = psycopg2.connect(user="postgres",
-                                  password="postgres",
+    connection = psycopg2.connect(user="xxxx",
+                                  password="xxxx",
                                   host="10.197.0.3",
                                   port="5432",
                                   database="private-instance-db")
