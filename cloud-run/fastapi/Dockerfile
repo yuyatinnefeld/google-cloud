@@ -7,4 +7,3 @@ COPY ./conf /code/conf
 COPY ./resources /code/resources
 RUN echo $(pwd)
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
-
