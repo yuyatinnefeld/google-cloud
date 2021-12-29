@@ -24,7 +24,7 @@ vi main.py
 ## Run the App locally
 ```bash
 # run the live server
-uvicorn main:app --reload
+uvicorn app.main:app --reload
 
 # Json Response API UI
 http://127.0.0.1:8000
@@ -41,8 +41,8 @@ FROM python:3.7-slim
 WORKDIR /code
 COPY ./requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
-COPY ./main.py /code/
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+COPY ./app /code/app
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
 ```
 
 ## Create a requirements.txt
