@@ -3,7 +3,6 @@ from enum import Enum
 
 from fastapi import FastAPI
 
-from app.logger import logger
 from app.cluster_operator import ClusterOperator
 from app.wf_temp_operator import WorkflowTemplateOperator
 

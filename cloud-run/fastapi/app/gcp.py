@@ -1,5 +1,6 @@
 import yaml
 import uuid
+import os
 
 from typing import Optional, Dict, Any
 from google.cloud import dataproc_v1 as dataproc
@@ -21,14 +22,14 @@ def read_yaml_config(path: str) -> Dict[str, Any]:
 
 # Config setting up
 # ============================================
-config = read_yaml_config("resources/app_conf.yaml")
+config = read_yaml_config("./resources/app_conf.yaml")
 
 project_id = config['project_id']
 region = config['region']
 config_bucket = config['dataproc_staging_bucket']
 temp_bucket = config['dataproc_temp_bucket']
-
-DATAPROC_API_ENDPOINT=f"{region}-dataproc.googleapis.com:443"
+dataproc_api_endpoint=config['dataproc_api_endpoint']
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = config['google_application_creds']
 
 
 def get_cluster(*, cluster_name: str) -> Optional[Operation]:
@@ -48,7 +49,7 @@ def get_cluster(*, cluster_name: str) -> Optional[Operation]:
 def create_cluster(*, cluster_name: str) -> Optional[Operation]:
     """Create a dataproc cluster """
     
-    cluster_client = dataproc.ClusterControllerClient(client_options={"api_endpoint": DATAPROC_API_ENDPOINT})
+    cluster_client = dataproc.ClusterControllerClient(client_options={"api_endpoint": dataproc_api_endpoint})
 
     cluster = {
         "project_id": project_id,
@@ -74,7 +75,7 @@ def create_cluster_yaml_conf(*, path: str) -> Optional[Operation]:
     except Exception as e:
         logger.waring("could not find a cluster config file", e)
 
-    cluster_client = dataproc.ClusterControllerClient(client_options={"api_endpoint": DATAPROC_API_ENDPOINT})
+    cluster_client = dataproc.ClusterControllerClient(client_options={"api_endpoint": dataproc_api_endpoint})
 
     try:
         operation = cluster_client.create_cluster(
@@ -91,7 +92,7 @@ def create_cluster_yaml_conf(*, path: str) -> Optional[Operation]:
 def delete_cluster(*, cluster_name: str) -> Optional[Operation]:
     """Delete the cluster."""
 
-    cluster_client = dataproc.ClusterControllerClient(client_options={"api_endpoint": DATAPROC_API_ENDPOINT})
+    cluster_client = dataproc.ClusterControllerClient(client_options={"api_endpoint": dataproc_api_endpoint})
 
     logger.info("cluster: %s is starting to tear down", cluster_name)
     operation = cluster_client.delete_cluster(request={"project_id": project_id, "region": region, "cluster_name": cluster_name})
@@ -102,7 +103,7 @@ def delete_cluster(*, cluster_name: str) -> Optional[Operation]:
 def get_list_clusters():
     """List the details of clusters in the region."""
 
-    cluster_client = dataproc.ClusterControllerClient(client_options={"api_endpoint": DATAPROC_API_ENDPOINT})
+    cluster_client = dataproc.ClusterControllerClient(client_options={"api_endpoint": dataproc_api_endpoint})
     cluster_list = cluster_client.list_clusters(request={"project_id": project_id, "region": region})
     return cluster_list
     
@@ -118,7 +119,7 @@ def start_workflow_template(template_name: str) -> Optional[Operation]:
         GCP API core operation
     """
 
-    dataproc_workflow_client = dataproc.WorkflowTemplateServiceClient(client_options={"api_endpoint":DATAPROC_API_ENDPOINT})
+    dataproc_workflow_client = dataproc.WorkflowTemplateServiceClient(client_options={"api_endpoint":dataproc_api_endpoint})
     template_path = f"projects/{project_id}/regions/{region}/workflowTemplates/{template_name}"
     operation = dataproc_workflow_client.instantiate_workflow_template(name=template_path)
 
@@ -137,7 +138,7 @@ def start_workflow_template_with_args(template_name: str, parameters: Dict[str, 
         GCP API core operation
     """    
 
-    dataproc_workflow_client = dataproc.WorkflowTemplateServiceClient(client_options={"api_endpoint":DATAPROC_API_ENDPOINT})
+    dataproc_workflow_client = dataproc.WorkflowTemplateServiceClient(client_options={"api_endpoint":dataproc_api_endpoint})
     template_path = f"projects/{project_id}/regions/{region}/workflowTemplates/{template_name}"
     
     if parameters:
@@ -154,7 +155,7 @@ def start_workflow_template_with_args(template_name: str, parameters: Dict[str, 
 
 def submit_pyspark_job(*, cluster_name: str, job_name: str, main_python_file_uri: str, parameters: Dict[str, Any]) -> Optional[Operation]:
     """Submit Pyspark Job to use an existing dataproc cluster"""
-    job_client = dataproc.JobControllerClient(client_options={"api_endpoint": DATAPROC_API_ENDPOINT})
+    job_client = dataproc.JobControllerClient(client_options={"api_endpoint": dataproc_api_endpoint})
     uuid_str = str(uuid.uuid4())
     job_name += uuid_str[:5]
 

@@ -1,4 +1,6 @@
 project_id: yt-demo-dev
+google_application_creds: conf/yt-demo-dev-sa.json
+region: europe-west1
 dataproc_staging_bucket: yt-demo-dev-dataproc-staging
 dataproc_temp_bucket: yt-demo-dev-dataproc-temp
-region: europe-west1
+dataproc_api_endpoint: europe-west1-dataproc.googleapis.com:443

@@ -54,7 +54,7 @@ pip freeze > requirements.txt
 ```bash
 # test run
 docker build -t myimage .
-docker run -d --name fastapi_container -p 8080:8080 myimage
+docker run -it -p 8080:8080 myimage
 docker ps
 # check 
 http://127.0.0.1:8080/docs
