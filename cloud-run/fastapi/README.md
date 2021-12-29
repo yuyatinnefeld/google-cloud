@@ -13,6 +13,7 @@ python3 -m venv venv
 source venv/bin/activate
 pip install fastapi[all]
 pip install uvicorn[standard]
+export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/conf/yt-demo-dev-sa.json"
 ```
 
 ## Create an App
@@ -24,7 +25,7 @@ vi main.py
 ## Run the App locally
 ```bash
 # run the live server
-uvicorn main:app --reload
+uvicorn app.main:app --reload
 
 # Json Response API UI
 http://127.0.0.1:8000
@@ -41,8 +42,8 @@ FROM python:3.7-slim
 WORKDIR /code
 COPY ./requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
-COPY ./main.py /code/
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+COPY ./app /code/app
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
 ```
 
 ## Create a requirements.txt
@@ -53,7 +54,7 @@ pip freeze > requirements.txt
 ```bash
 # test run
 docker build -t myimage .
-docker run -d --name mycontainer -p 8080:8080 myimage
+docker run -d --name fastapi_container -p 8080:8080 myimage
 docker ps
 # check 
 http://127.0.0.1:8080/docs
@@ -65,13 +66,15 @@ http://127.0.0.1:8080/docs
 
 or
 
-## (ALTERNATIVE) Deploy via Cloud Build
+### (ALTERNATIVE) Deploy via Cloud Build
 ```bash
 # retrieve project-id of active project
 gcloud config get-value project
 
 # build docker/container image
-gcloud builds submit --tag gcr.io/{MY-PROJECT-ID}/mygeocoder
+gcloud builds submit --tag gcr.io/{MY-PROJECT-ID}/myimage
+
+# or use artifact registry
 
 # cloud run deploy
 gcloud run deploy --image {MY-CONTAINER-URL} --platform managed
@@ -82,6 +85,6 @@ gcloud run deploy --image {MY-CONTAINER-URL} --platform managed
 gcloud run services delete fastapi-service --region=europe-west1
 deactivate
 rm -rf venv
-docker stop mycontainer
+docker stop fastapi_container
 docker system prune -a
 ```
