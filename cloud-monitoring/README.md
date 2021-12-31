@@ -1,4 +1,4 @@
-# Cloud Logging and Monitoring
+# Cloud Monitoring
 
 ## Info
 - https://www.cloudskillsboost.google/quests/143?utm_source=gcp_training&utm_medium=website&utm_campaign=cgc-appdev
@@ -12,7 +12,7 @@
 - 6. Create an alerting policy
 - 7. Create a Dashboard
 
-## Lab2 - Cloud Functions Logging & Monitoring
+## Lab2 - Cloud Functions Monitoring
 - 1. Create Cloud Function Instance via Terraform
 - 2. Install vegeta tool and Send Test Traffic to Cloud Function with this
 - 3. Create logs-based metric (Logs Explorer)
