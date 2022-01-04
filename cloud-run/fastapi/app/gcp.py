@@ -1,4 +1,3 @@
-import yaml
 import uuid
 import os
 
@@ -8,27 +7,16 @@ from google.api_core.operation import Operation
 from google.api_core.exceptions import AlreadyExists
 
 from app.logger import logger
+from app.settings import (
+    config,
+    project_id,
+    region,
+    config_bucket,
+    temp_bucket,
+    dataproc_api_endpoint
+    )
 
 
-def read_yaml_config(path: str) -> Dict[str, Any]:
-    """Read a YAML file and return a dictionary"""
-    with open(path, "r") as f:
-        try:
-            config = yaml.safe_load(f)
-        except yaml.YAMLError as exc:
-            print(exc)
-    return config
-
-
-# Config setting up
-# ============================================
-config = read_yaml_config("./resources/app_conf.yaml")
-
-project_id = config['project_id']
-region = config['region']
-config_bucket = config['dataproc_staging_bucket']
-temp_bucket = config['dataproc_temp_bucket']
-dataproc_api_endpoint=config['dataproc_api_endpoint']
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = config['google_application_creds']
 
 
