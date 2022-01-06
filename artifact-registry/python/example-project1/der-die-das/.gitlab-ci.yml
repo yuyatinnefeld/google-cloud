@@ -1,0 +1,100 @@
+variables:
+  PYTHON_IMAGE: python:3.7
+  CLOUD_SDK_IMAGE: google/cloud-sdk:slim  
+  PROJECT_ID: yt-demo-dev
+  REGION: europe-west1
+  REPO_NAME: der-die-das-repo
+  PACKAGE_NAME: der-die-das
+  ARTIFACT_URL: https://${REGION}-python.pkg.dev/${PROJECT_ID}/
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .cache/pip
+    - venv/
+
+stages:
+  - build
+  - test
+  - deploy
+  - upload
+  - install
+
+before_script:
+  - python -V
+  - pip install virtualenv
+  - virtualenv --system-site-packages venv
+  - source venv/bin/activate
+  - pip install --upgrade pip
+
+build-package:
+  stage: build
+  image: ${PYTHON_IMAGE}
+  script:
+    - pip install wheel
+    - python setup.py bdist_wheel
+  artifacts:
+    paths:
+      - dist/*.whl
+      - venv/
+
+.test-package:
+  stage: test
+  image: ${PYTHON_IMAGE}
+  script:
+    - rm -rf der_die_das
+    - pip install dist/*.whl
+    - python -m der_die_das.__init__ Burger
+  artifacts:
+    paths:
+      - dist/*.whl
+
+.python-cloud-sdk:
+  image: ${CLOUD_SDK_IMAGE}
+  before_script:
+    - gcloud config set project ${PROJECT_ID}
+    - python3 -V
+    - source venv/bin/activate
+    - curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+    - python3 get-pip.py
+    - python3 -m pip install twine keyrings.google-artifactregistry-auth
+    - gcloud auth activate-service-account --key-file ${GCP_SERVICE_ACCOUNT_KEY_DEV}
+  when: manual
+
+
+create-private-repo:
+  stage: deploy
+  extends: .python-cloud-sdk
+  script:
+    - |
+      gcloud artifacts repositories create ${REPO_NAME} \
+        --repository-format=python \
+        --location=${REGION} \
+        --description="DER DIE DAS package repository"
+    - gcloud artifacts repositories list
+  artifacts:
+    paths:
+      - dist/*.whl
+      - venv/
+
+#TODO: Local Working with the same SA! NOT WORKING in the GITLAB RUNNER
+.upload-package:
+  stage: upload 
+  extends: .python-cloud-sdk
+  script:
+    - keyring --list-backends
+    - gcloud config set artifacts/repository ${REPO_NAME}
+    - gcloud config set artifacts/location ${REGION}
+    - gcloud artifacts print-settings python --json-key=${GCP_SERVICE_ACCOUNT_KEY_DEV}
+    - twine upload --repository-url https://${REGION}-python.pkg.dev/${PROJECT_ID}/${REPO_NAME}/ dist/* --verbose
+    - gcloud artifacts versions list --package=${PACKAGE_NAME}
+########################################################################
+
+#TODO: Local Working with the same SA! NOT WORKING in the GITLAB RUNNER
+.install-package:
+  stage: install
+  extends: .python-cloud-sdk
+  script:
+    - gcloud artifacts packages list --repository=${REPO_NAME}
+    - python3 -m pip install --extra-index-url https://${REGION}-python.pkg.dev/${PROJECT_ID}/${REPO_NAME}/simple/ ${PACKAGE_NAME}
+    - python3 -m der_die_das.__init__ Mauer

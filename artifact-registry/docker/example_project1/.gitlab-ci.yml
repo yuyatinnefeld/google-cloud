@@ -1,0 +1,94 @@
+variables:
+  CLOUD_SDK_IMAGE: google/cloud-sdk:slim
+  DOCKER_IMAGE: docker:stable
+  PROJECT_ID: yt-demo-dev
+  REGION: europe-west1
+  REPO_NAME: my-docker-repo
+  FASTAPI_IMAGE: simple-fastapi-image
+  TAG: "0.1"
+  GAR_DOCKER_IMAGE: "${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${FASTAPI_IMAGE}:${TAG}"
+  SERVICE_NAME: my-simple-fastapi-service
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+
+stages:
+  - deploy
+  - push
+  - pull
+
+
+create-private-repo:
+  stage: deploy
+  image: ${CLOUD_SDK_IMAGE}
+  script:
+    - gcloud auth activate-service-account --key-file ${GCP_SERVICE_ACCOUNT_KEY_DEV}
+    - gcloud config set project ${PROJECT_ID}
+    - gcloud config set artifacts/location ${REGION}
+    - |
+      gcloud artifacts repositories create ${REPO_NAME} \
+        --repository-format=docker \
+        --location=${REGION} \
+        --description="Docker repository"
+    - gcloud artifacts repositories list
+
+######### CONTAINER REGISTRY SETUP #########
+.container-registry-setup:
+  image: ${DOCKER_IMAGE}
+  tags:
+    - docker
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_DRIVER: overlay2
+    DOCKER_IMAGE_NAME: eu.gcr.io/${PROJECT_ID}/${FASTAPI_IMAGE}
+  before_script:
+    - cat ${GCP_SERVICE_ACCOUNT_KEY_DEV} | docker login -u _json_key --password-stdin https://eu.gcr.io
+    - docker info
+
+gcr-upload-container:
+  stage: push
+  extends: .container-registry-setup
+  script:
+    - docker build --tag $DOCKER_IMAGE_NAME:$CI_COMMIT_SHORT_SHA .
+    - docker run -d --name fastapi -p 8080:8080 $DOCKER_IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+    - docker push $DOCKER_IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+
+gcr-install-container:
+  stage: pull
+  extends: .container-registry-setup
+  script:
+    - docker pull $DOCKER_IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+    - docker images
+
+######### ARTIFACT REGISTRY SETUP #########
+
+.artifact-registry-setup:
+  image: ${DOCKER_IMAGE}
+  tags:
+    - docker
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_DRIVER: overlay2
+    DOCKER_IMAGE_NAME: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${FASTAPI_IMAGE}
+  before_script:
+    - cat ${GCP_SERVICE_ACCOUNT_KEY_DEV} | docker login -u _json_key --password-stdin https://${REGION}-docker.pkg.dev
+    - docker info
+
+gar-upload-container:
+  stage: push
+  extends: .artifact-registry-setup
+  script:
+    - docker build --tag $DOCKER_IMAGE_NAME:$CI_COMMIT_SHORT_SHA .
+    - docker run -d --name fastapi -p 8080:8080 $DOCKER_IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+    - docker push $DOCKER_IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+
+gar-install-container:
+  stage: pull
+  extends: .artifact-registry-setup
+  script:
+    - docker pull $DOCKER_IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+    - docker images
