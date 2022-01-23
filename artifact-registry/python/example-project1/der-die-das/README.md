@@ -43,7 +43,7 @@ vi der_die_das/__init__.py
 python3 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip setuptools wheel
-python setup.py bdist_wheel --universal
+python setup.py bdist_wheel
 
 # build, dist dirs are created in the current project
 ls build
@@ -151,6 +151,23 @@ python -m der_die_das.__init__ Burger
 >>> check("Burger")
 searched : Burger
 answer: DER Burger
+```
+
+## Upload into the PyPI
+```bash
+python -m pip install twine
+# upload the package into TEST PyPI
+twine upload --repository testpypi dist/*
+
+# download the package
+python -m pip install --extra-index-url https://test.pypi.org/simple/ der-die-das
+
+
+# upload the package into TEST PyPI
+twine upload dist/*
+
+
+
 ```
 
 ## CI/CD Pipeline
