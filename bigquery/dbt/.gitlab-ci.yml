@@ -1,0 +1,50 @@
+stages:
+  - build
+  - test
+  - deploy
+  
+image: registry.gitlab.com/gitlab-data/data-image/dbt-image:v0.0.15
+
+before_script:
+  - export GCP_JSON_KEY=$GCP_JSON_KEY
+  - export CI_PROFILE_TARGET="--profiles-dir profile --target dev"
+  - export PROD_PROFILE_TARGET="--profiles-dir profile --target prod"
+  - echo $CI_PROFILE_TARGET
+  - echo $PROD_PROFILE_TARGET
+
+after_script:
+  - echo "❄️OK❄️"
+
+build1 ⚙️:
+  stage: build
+  script:
+    - echo "❄️install all packages❄️"
+    - pip install -r requirements.txt
+
+test1 🦖:
+  stage: test
+  script:
+    - echo "❄️connection test❄️"
+    - dbt debug $CI_PROFILE_TARGET
+
+test2 🐭:
+  stage: test
+  needs: [test1 🦖]
+  script:
+    - echo "❄️config test❄️"
+    - dbt test $CI_PROFILE_TARGET
+
+dev deploy ⚡:
+  stage: deploy
+  script:
+    - echo "❄️ deploy to development ❄️"
+    - dbt run $CI_PROFILE_TARGET
+  when: manual
+
+prod deploy 🚀:
+  stage: deploy
+  script:
+    - echo "❄️ deploy to production ❄️"
+    - dbt seed $PROD_PROFILE_TARGET
+    - dbt run $PROD_PROFILE_TARGET
+  when: manual

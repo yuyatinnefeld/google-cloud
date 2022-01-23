@@ -1,0 +1,25 @@
+dbt_bq:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: service-account
+      project: yygcplearning #dev gcp project
+      dataset: ds_eu
+      location: EU
+      threads: 1
+      keyfile: conf/gcp_key.json
+      timeout_seconds: 300
+      priority: interactive
+      retries: 1
+    prod:
+      type: bigquery
+      method: service-account
+      project: yygcplearning #prod gcp project
+      dataset: ds_eu
+      location: EU
+      threads: 1
+      keyfile: conf/gcp_key.json
+      timeout_seconds: 300
+      priority: interactive
+      retries: 1
