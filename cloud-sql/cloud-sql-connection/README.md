@@ -95,7 +95,7 @@ CREATE TABLE demo-table (
 ### Option3: Proxy connection (Public IP)
 Info: https://www.cloudskillsboost.google/focuses/1215?parent=catalog
 
-
+#### Mac Book
 ```bash
 # download the Cloud SQL Proxy (ubuntu terminal)
 wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
@@ -119,6 +119,8 @@ psql -h 127.0.0.1 -p 3306 -U postgres -d frontend-db
 # list dbs
 \l
 ```
+
+#### Windows
 
 ### Option4: Python Script (Private IP)
 
