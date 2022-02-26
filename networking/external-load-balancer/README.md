@@ -8,17 +8,20 @@ https://cloud.google.com/iap/docs/load-balancer-howto#gcloud_5
 - 2 x FW (HTTP, health check)
 - 2 x GCE instance template (us-east1, europe-west1)
 - 2 x instance groups for scaling
-- 2 x Default Subnets
+- 2 x Default Subnets (us-east1, europe-west1)
 - 1 x Default VPC
 
 ## Setup Network
 ./network.sh
 
 ## Setup GCE
-./compute-engine.sh
+./compute-engine.sh (Service Account Change)
 
 ## Testing for confirm the GCE backend access
 ```bash
+./compute-engine2.sh
+
+# connect ssh
 EXTERNAL_IP_BACKEND=35.185.2.3
 curl ${EXTERNAL_IP_BACKEND}
 ```

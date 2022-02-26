@@ -1,10 +1,13 @@
 # create 2 instance templates
+PROJECT_ID=$(gcloud config get-value project)
 TEMPLATE_NAME_1="us-east1-template"
 METADATA="startup-script-url=gs://cloud-training/gcpnet/httplb/startup.sh,enable-oslogin=true"
 REGION_1="us-east1"
-REGION_2="europe-west1"
 ZONE_1="us-east1-b"
+REGION_2="europe-west1"
 ZONE_2="europe-west1-b"
+SERVICE_ACCOUNT="271595367183-compute@developer.gserviceaccount.com"
+NW_TAG="http-server"
 
 
 gcloud compute instance-templates create ${TEMPLATE_NAME_1} \
@@ -13,7 +16,7 @@ gcloud compute instance-templates create ${TEMPLATE_NAME_1} \
     --network-interface=network-tier=PREMIUM,subnet=default \
     --metadata=${METADATA} \
     --maintenance-policy=MIGRATE \
-    --service-account=809689202411-compute@developer.gserviceaccount.com \
+    --service-account=${SERVICE_ACCOUNT} \
     --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append  \
     --region=${REGION_1} \
     --tags=${NW_TAG} \
@@ -26,13 +29,14 @@ gcloud compute instance-templates create ${TEMPLATE_NAME_1} \
 TEMPLATE_NAME_2="europe-west1-template"
 METADATA="startup-script-url=gs://cloud-training/gcpnet/httplb/startup.sh,enable-oslogin=true"
 
+
 gcloud compute instance-templates create ${TEMPLATE_NAME_2} \
     --project=${PROJECT_ID} \
     --machine-type=n1-standard-1 \
     --network-interface=network-tier=PREMIUM,subnet=default \
     --metadata=${METADATA} \
     --maintenance-policy=MIGRATE \
-    --service-account=809689202411-compute@developer.gserviceaccount.com \
+    --service-account=${SERVICE_ACCOUNT} \
     --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append  \
     --region=${REGION_2} \
     --tags=${NW_TAG} \
@@ -42,15 +46,15 @@ gcloud compute instance-templates create ${TEMPLATE_NAME_2} \
     --shielded-integrity-monitoring \
     --reservation-affinity=any
 
-# create 2 instance groups
+# create 2 instance groups for scaling
 
 GROUP_1="us-east1-mig"
 gcloud beta compute instance-groups managed create ${GROUP_1} \
     --project=${PROJECT_ID} \
-    --base-instance-name=${GROUP_1} \ 
-    --size=1 \ 
+    --base-instance-name=${GROUP_1} \
+    --size=1 \
     --template=${TEMPLATE_NAME_1} \
-    --zones=us-east1-b,us-east1-c,us-east1-d \ 
+    --zones=us-east1-b,us-east1-c,us-east1-d \
     --target-distribution-shape=EVEN
 
 gcloud beta compute instance-groups managed set-autoscaling ${GROUP_1} \
@@ -68,7 +72,8 @@ gcloud compute instance-groups managed create ${GROUP_2} \
     --base-instance-name=europe-west1-mig \
     --size=1 \
     --template=${TEMPLATE_NAME_2} \
-    --zones=europe-west1-a,europe-west1-b \ 
+    --zones=europe-west1-b,europe-west1-c \
+    --target-distribution-shape=EVEN
 
 gcloud beta compute instance-groups managed set-autoscaling ${GROUP_2} \
     --project=${PROJECT_ID} \

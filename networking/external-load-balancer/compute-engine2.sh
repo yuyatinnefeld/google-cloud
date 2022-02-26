@@ -1,10 +1,10 @@
 PROJECT_ID=$(gcloud config get-value project)
-ZONE_3="us-central1-f"
+ZONE_3="europe-west1-b"
 SERVICE_ACCOUNT="271595367183-compute@developer.gserviceaccount.com"
-SUBNET="subnet-a"
-PRIVAT_IP=10.10.20.50
+SUBNET="default"
+PRIVAT_IP=10.132.0.5 # between 2 Internal IPs
 
-gcloud compute instances create utility-vm \
+gcloud beta compute instances create utility-vm \
  --project=${PROJECT_ID} \
  --zone=${ZONE_3} \
  --machine-type=f1-micro \

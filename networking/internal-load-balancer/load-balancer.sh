@@ -27,14 +27,14 @@ gcloud compute backend-services add-backend ${BACKEND_SERVICE} \
 
 # create mapping
 FORWARDING="fr-ilb"
-INTERNAL_IP=10.10.22.2
+INTERNAL_LB_IP=10.10.22.2
 
 gcloud compute forwarding-rules create ${FORWARDING} \
     --region=${REGION} \
     --load-balancing-scheme=internal \
     --network=${NETWORK} \
     --subnet=${SUBNET} \
-    --address=${INTERNAL_IP} \
+    --address=${INTERNAL_LB_IP} \
     --ip-protocol=TCP \
     --ports=80,8008,8080,8088 \
     --backend-service=${BACKEND_SERVICE} \
