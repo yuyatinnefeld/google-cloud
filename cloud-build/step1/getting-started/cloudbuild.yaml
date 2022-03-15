@@ -1,0 +1,5 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-t', 'europe-west1-docker.pkg.dev/yuyatinnefeld-dev/quickstart-docker-repo/quickstart-image:tag1', '.' ]
+images:
+- 'europe-west1-docker.pkg.dev/yuyatinnefeld-dev/quickstart-docker-repo/quickstart-image:tag1'
