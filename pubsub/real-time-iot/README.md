@@ -33,7 +33,7 @@ echo "Creating bucket: gs://$DEVSHELL_PROJECT_ID"
 gsutil mb gs://$DEVSHELL_PROJECT_ID
 ```
 
-## Setup Dataflow Pipelin
+## Setup Dataflow Pipeline
 
 1. Navigation menu > Dataflow.
 2. Click CREATE JOB FROM TEMPLATE.
