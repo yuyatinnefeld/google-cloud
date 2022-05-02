@@ -1,0 +1,7 @@
+-- ### show all table DDL scripts ### ---
+WITH all_tables_ddl AS
+  (
+      SELECT ddl FROM PROJECT_ID.xxxx_table_name.INFORMATION_SCHEMA.TABLES
+  )
+SELECT ddl FROM all_tables_ddl;
+
