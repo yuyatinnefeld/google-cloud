@@ -1,0 +1,34 @@
+variables:
+  CLOUD_SDK_IMAGE: google/cloud-sdk
+  LOCATION: "europe-west1"
+  REPO_NAME:  "my-react-repo"
+  IMAGE_TAG_NAME: "react-image:v1"
+  PROJECT_ID: yuyatinnefeld-dev
+
+image: ${CLOUD_SDK_IMAGE}
+
+stages:
+  - deploy-image
+  - deploy-run
+
+deploy-artifact-registry:
+  stage: deploy-image
+  before_script:
+    - gcloud auth activate-service-account --key-file ${GCP_SERVICE_ACCOUNT_KEY_DEV}
+  script:
+    - gcloud config set project ${PROJECT_ID}
+    - gcloud builds submit --tag eu.gcr.io/${PROJECT_ID}/${REPO_NAME}/${IMAGE_TAG_NAME}
+  variables:
+    VERSION: V1
+  when: manual
+
+deploy-cloud-run:
+  stage: deploy-run
+  before_script: 
+    - gcloud auth activate-service-account --key-file ${GCP_SERVICE_ACCOUNT_KEY_DEV}
+  script: 
+    - gcloud config set project ${PROJECT_ID}
+    - gcloud run deploy react-app --image eu.gcr.io/${PROJECT_ID}/${REPO_NAME}/${IMAGE_TAG_NAME} --platform managed --region ${LOCATION} --no-allow-unauthenticated
+  variables:
+    VERSION: V1
+  when: manual
