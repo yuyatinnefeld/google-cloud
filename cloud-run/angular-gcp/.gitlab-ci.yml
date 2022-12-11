@@ -1,0 +1,87 @@
+variables:
+  CLOUD_SDK_IMAGE: google/cloud-sdk
+  NODE_IMAGE: node
+  APP_NAME: my-app
+  REPO: angular-repo 
+  IMAGE: angular
+
+stages:
+  - initiate
+  - build
+  - test
+  - deploy1
+  - deploy2
+
+# only for the first time to initiate my-app
+
+#initiate:
+#  stage: initiate
+#  image: ${NODE_IMAGE}
+#  before_script:
+#    - node --version
+#    - npm --version
+#    - npm install -g @angular/cli
+#  script:
+#    - ng new ${APP_NAME}
+#    - cd ${APP_NAME}
+#    - |
+#      cat <<EOT >> server.js
+#      var express = require('express');
+#      var app = express();
+#      app.use(express.static('dist/my-app'));
+#      app.get('/', function (req, res,next) {
+#       res.redirect('/');
+#      });
+#      app.listen(8080)
+#      EOT
+#  artifacts:
+#    paths:
+#      - ${APP_NAME}
+
+build:
+  stage: build
+  image: ${NODE_IMAGE}
+  before_script:
+    - node --version
+    - npm --version
+    - npm install -g @angular/cli
+  script:
+    - cd my-app
+    - npm install
+    - npm run build --prod
+  artifacts:
+    paths:
+      - ${APP_NAME}
+
+test:
+  stage: test
+  script:
+    - cd ${APP_NAME}
+    - echo "testing..."
+  artifacts:
+    paths:
+      - ${APP_NAME}
+
+deploy-container-registry:
+  stage: deploy1
+  image: ${CLOUD_SDK_IMAGE}
+  before_script: 
+    - gcloud auth activate-service-account --key-file ${GCP_SERVICE_ACCOUNT_KEY_DEV}
+  script:
+    - gcloud config set project ${PROJECT_ID}
+    - gcloud builds submit --tag "eu.gcr.io/${PROJECT_ID}/${REPO}/${IMAGE}:$CI_COMMIT_SHORT_SHA"
+  variables:
+    PROJECT_ID: yuyatinnefeld-dev
+  when: manual
+
+deploy-cloud-run:
+  stage: deploy2
+  image: ${CLOUD_SDK_IMAGE}
+  before_script: 
+    - gcloud auth activate-service-account --key-file ${GCP_SERVICE_ACCOUNT_KEY_DEV}
+  script: 
+    - gcloud config set project ${PROJECT_ID}
+    - gcloud run deploy angular-frontend-app --image "eu.gcr.io/${PROJECT_ID}/${REPO}/${IMAGE}:$CI_COMMIT_SHORT_SHA" --platform managed --region europe-west1
+  variables:
+    PROJECT_ID: yuyatinnefeld-dev
+  when: manual

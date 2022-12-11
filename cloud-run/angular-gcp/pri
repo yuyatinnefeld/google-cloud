@@ -1,0 +1,81 @@
+variables:
+  CLOUD_SDK_IMAGE: google/cloud-sdk
+  NODE_IMAGE: node
+  APP_NAME: my-app
+  REPO: angular-repo 
+  IMAGE: angular
+
+stages:
+  - build
+  - test
+  - deploy1
+  - deploy2
+
+# only for the first time to initiate my-app
+
+#initiate:
+#  stage: initiate
+#  image: ${NODE_IMAGE}
+#  before_script:
+#    - node --version
+#    - npm --version
+#  script:
+#    - npm install -g @angular/cli
+#    - ng new ${APP_NAME}
+#    - cd ${APP_NAME}
+#    - |
+#      cat <<EOT >> server.js
+#      var express = require('express');
+#      var app = express();
+#      app.use(express.static('dist/my-app'));
+#      app.get('/', function (req, res,next) {
+#       res.redirect('/');
+#      });
+#      app.listen(8080)
+#      EOT
+#  artifacts:
+#    paths:
+#      - ${APP_NAME}
+
+.build:
+  stage: build
+  image: ${NODE_IMAGE}
+  script:
+    - npm install -g @angular/cli
+    - cd my-app
+    - ng build ${APP_NAME}
+  artifacts:
+    paths:
+      - ${APP_NAME}
+
+test:
+  stage: test
+  script:
+    - cd ${APP_NAME}
+    - echo "testing..."
+  artifacts:
+    paths:
+      - ${APP_NAME}
+
+deploy-container-registry:
+  stage: deploy1
+  image: ${CLOUD_SDK_IMAGE}
+  before_script: 
+    - gcloud auth activate-service-account --key-file ${GCP_SERVICE_KEY_DEV_SYS}
+  script:
+    - gcloud config set project ${GCP_PROJECT_ID}
+    - gcloud builds submit --tag "eu.gcr.io/${GCP_PROJECT_ID}/${REPO}/${IMAGE}:$CI_COMMIT_SHORT_SHA"
+  variables:
+    GCP_PROJECT_ID: ${GCP_PROJECT_ID_DEV_SYS}
+
+deploy-cloud-run:
+  stage: deploy2
+  image: ${CLOUD_SDK_IMAGE}
+  before_script: 
+    - gcloud auth activate-service-account --key-file ${GCP_SERVICE_KEY_DEV_SYS}
+  script: 
+    - gcloud config set project ${GCP_PROJECT_ID}
+    - gcloud run deploy angular-frontend-app --image "eu.gcr.io/${GCP_PROJECT_ID}/${REPO}/${IMAGE}:$CI_COMMIT_SHORT_SHA" --platform managed --region europe-west1
+  variables:
+    GCP_PROJECT_ID: ${GCP_PROJECT_ID_DEV_SYS}
+  when: manual
