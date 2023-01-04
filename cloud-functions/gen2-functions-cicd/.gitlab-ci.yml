@@ -1,0 +1,83 @@
+image: google/cloud-sdk
+
+stages:
+  - deploy
+
+variables:
+  PYTHON_VERSION: python310
+  GCP_PROJECT_ID: yuyatinnefeld-dev
+  LOCATION: "europe-west1"
+  COMPUTE_ENGINE_SA: "499210473980-compute@developer.gserviceaccount.com"
+
+
+### deploy bigquery table trigger function ###
+.deploy-bq-trigger-func:
+  stage: deploy
+  script:
+    - gcloud config set project ${GCP_PROJECT_ID}
+    - |
+      gcloud alpha functions deploy ${FUNCTION_NAME} \
+        --gen2 \
+        --source=${SOURCE_DIR} \
+        --runtime=${PYTHON_VERSION} \
+        --entry-point=${ENTRY_POINT_BQ} \
+        --trigger-event-filters=type=${TRIGGER_EVENT_TYPE},methodName=${BQ_TABLE_TRIGGER},serviceName=${BQ_EVENT_PROVIDER} \
+        --set-env-vars=BQ_TABLE_ID=${BQ_TABLE_ID} \
+        --allow-unauthenticated \
+        --region=${LOCATION} \
+        --service-account=${COMPUTE_ENGINE_SA} \
+        --min-instances=1 --max-instances=100
+  when: manual
+
+
+deployment-bq-trigger-func:
+  extends:
+    - .deploy-bq-trigger-func
+  before_script: 
+    - gcloud auth activate-service-account --key-file ${GCP_SERVICE_ACCOUNT_KEY_DEV}
+  variables:
+    FUNCTION_NAME: "bq-trigger-func"
+    SOURCE_DIR: "bigquery-src"
+    TRIGGER_EVENT_TYPE: "google.cloud.audit.log.v1.written"
+    ENTRY_POINT_BQ: "bigquery_trigger_entry_point"
+    BQ_TABLE_TRIGGER: "google.cloud.bigquery.v2.JobService.InsertJob"
+    BQ_EVENT_PROVIDER: "bigquery.googleapis.com"
+    BQ_TABLE_ID: "projects/yuyatinnefeld-dev/datasets/demo_dataset/tables/demo_table"
+  only:
+    - master
+
+### deploy gcs bucket trigger function ###
+
+.deploy-gcs-trigger-func:
+  stage: deploy
+  script:
+    - gcloud config set project ${GCP_PROJECT_ID}
+    - |
+      gcloud alpha functions deploy ${FUNCTION_NAME} \
+        --gen2 \
+        --source=${SOURCE_DIR} \
+        --runtime=${PYTHON_VERSION} \
+        --entry-point=${ENTRY_POINT_GCS} \
+        --trigger-event=${GCS_BUCKET_TRIGGER} \
+        --trigger-resource=${EVENT_RESOURCE} \
+        --allow-unauthenticated \
+        --region=${LOCATION} \
+        --service-account=${COMPUTE_ENGINE_SA} \
+        --set-env-vars=BUCKET_PATH=${BUCKET_PATH} \
+        --min-instances=1 --max-instances=100
+  when: manual
+
+deployment-gcs-trigger-func:
+  extends:
+    - .deploy-gcs-trigger-func
+  before_script: 
+    - gcloud auth activate-service-account --key-file ${GCP_SERVICE_ACCOUNT_KEY_DEV}
+  variables:
+    FUNCTION_NAME: "gcs-trigger-func"
+    SOURCE_DIR: "storage-src"
+    GCS_BUCKET_TRIGGER: "google.cloud.storage.object.v1.finalized"
+    EVENT_RESOURCE: "demo-yuya-bucket-2023"
+    ENTRY_POINT_GCS: "gcs_trigger_entry_point"
+    BUCKET_PATH: "hello-demo-path/123"
+  only:
+    - master

@@ -1,0 +1,5 @@
+functions-framework==3.*
+google-auth==2.6.2
+google-cloud==0.34.0
+google-cloud-bigquery==3.3.2
+PyYAML==6.0
